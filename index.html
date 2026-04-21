@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pathfinder — The tutor that makes you think</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green-deep:   #1A3D2E;
+    --green-mid:    #2D6A4F;
+    --green-light:  #52B788;
+    --green-pale:   #EAF4EE;
+    --teal:         #9FE1CB;
+    --gold:         #F4C842;
+    --cream:        #FAF8F3;
+    --ink:          #1A1814;
+    --muted:        #6B6459;
+    --border:       #E2DDD5;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.25rem 2rem;
+    background: rgba(250,248,243,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem; font-weight: 700;
+    color: var(--green-deep); text-decoration: none;
+  }
+
+  .nav-logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--green-mid);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem; color: #fff; font-weight: 700;
+  }
+
+  .nav-links { display: flex; align-items: center; gap: 2rem; }
+  .nav-links a {
+    font-size: 0.9rem; font-weight: 500; color: var(--muted);
+    text-decoration: none; transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--green-mid); }
+
+  .nav-cta {
+    background: var(--green-mid); color: #fff !important;
+    padding: 0.5rem 1.25rem; border-radius: 100px;
+    font-weight: 500 !important; transition: background 0.2s !important;
+  }
+  .nav-cta:hover { background: var(--green-deep) !important; color: #fff !important; }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; align-items: center;
+    padding: 8rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 70% 40%, rgba(82,183,136,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 60% at 20% 80%, rgba(26,61,46,0.08) 0%, transparent 60%);
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0; opacity: 0.04;
+    background-image:
+      linear-gradient(var(--green-mid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--green-mid) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .hero-inner {
+    max-width: 1100px; margin: 0 auto; width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    position: relative;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--green-light);
+    background: rgba(82,183,136,0.1); border: 1px solid rgba(82,183,136,0.3);
+    padding: 0.35rem 0.9rem; border-radius: 100px; margin-bottom: 1.5rem;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.8rem, 5vw, 4.2rem);
+    line-height: 1.1; font-weight: 700;
+    color: var(--green-deep);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title em {
+    font-style: italic; color: var(--green-light);
+  }
+
+  .hero-sub {
+    font-size: 1.15rem; line-height: 1.7; color: var(--muted);
+    margin-bottom: 2.5rem; max-width: 480px;
+  }
+
+  .hero-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    background: var(--green-mid); color: #fff;
+    padding: 0.9rem 2rem; border-radius: 100px;
+    font-size: 1rem; font-weight: 500; text-decoration: none;
+    transition: all 0.2s; border: none; cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--green-deep); transform: translateY(-1px); }
+
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    color: var(--green-mid); font-size: 1rem; font-weight: 500;
+    text-decoration: none; transition: gap 0.2s;
+  }
+  .btn-secondary:hover { gap: 0.75rem; }
+
+  .hero-trust {
+    margin-top: 3rem; padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; gap: 1.5rem;
+    font-size: 0.85rem; color: var(--muted);
+  }
+
+  .trust-stat strong { display: block; font-size: 1.4rem; font-weight: 700; color: var(--green-deep); }
+
+  /* Phone mockup */
+  .hero-visual {
+    display: flex; justify-content: center; align-items: center;
+    position: relative;
+  }
+
+  .phone-frame {
+    width: 280px; height: 560px;
+    background: var(--green-deep);
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow:
+      0 40px 80px rgba(26,61,46,0.25),
+      0 0 0 1px rgba(255,255,255,0.1);
+    position: relative; z-index: 2;
+  }
+
+  .phone-screen {
+    background: #F7F5F0; border-radius: 30px; height: 100%;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+
+  .phone-header {
+    background: #fff; padding: 1rem;
+    border-bottom: 1px solid #E8E4DC;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+
+  .phone-header-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-mid); }
+  .phone-header-title { font-size: 0.75rem; font-weight: 600; color: #1A1814; }
+  .phone-header-sub { font-size: 0.6rem; color: #8A8278; margin-left: auto; }
+
+  .phone-chat { flex: 1; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem; overflow: hidden; }
+
+  .chat-bubble {
+    padding: 0.6rem 0.8rem; border-radius: 12px;
+    font-size: 0.65rem; line-height: 1.5; max-width: 85%;
+  }
+  .chat-bubble.tutor {
+    background: #fff; border: 1px solid #E8E4DC;
+    border-bottom-left-radius: 3px; align-self: flex-start;
+    color: #1A1814;
+  }
+  .chat-bubble.student {
+    background: #F0F7F4; border: 1px solid #C8E6D4;
+    border-bottom-right-radius: 3px; align-self: flex-end;
+    color: #2D6A4F; font-weight: 500;
+  }
+  .chat-bubble.hint {
+    background: #FFF8EC; border: 1px solid #F4C842;
+    align-self: flex-start; color: #7A5C00;
+    display: flex; gap: 0.3rem; align-items: flex-start;
+  }
+
+  .phone-input {
+    background: #fff; padding: 0.75rem;
+    border-top: 1px solid #E8E4DC;
+    display: flex; gap: 0.4rem; align-items: center;
+  }
+  .phone-input-box {
+    flex: 1; background: #F7F5F0; border: 1px solid #E8E4DC;
+    border-radius: 8px; padding: 0.4rem 0.6rem;
+    font-size: 0.6rem; color: #8A8278;
+  }
+  .phone-send {
+    width: 26px; height: 26px; border-radius: 6px;
+    background: var(--green-mid);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .phone-send svg { width: 12px; height: 12px; }
+
+  .hero-blob {
+    position: absolute; width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(82,183,136,0.15), transparent 70%);
+    border-radius: 50%; right: -60px; top: 50%; transform: translateY(-50%);
+    z-index: 1;
+  }
+
+  /* ── How it works ── */
+  .section {
+    padding: 6rem 2rem;
+    max-width: 1100px; margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.8rem; font-weight: 500; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--green-light);
+    margin-bottom: 1rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 700;
+    color: var(--green-deep); margin-bottom: 1rem; line-height: 1.2;
+  }
+
+  .section-sub {
+    font-size: 1.1rem; color: var(--muted); line-height: 1.7; max-width: 560px;
+  }
+
+  .steps {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 2rem; margin-top: 4rem;
+  }
+
+  .step {
+    padding: 2rem; background: #fff;
+    border: 1px solid var(--border); border-radius: 20px;
+    position: relative; transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .step:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(26,61,46,0.08); }
+
+  .step-num {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--green-pale); color: var(--green-mid);
+    font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .step h3 { font-size: 1.1rem; font-weight: 600; color: var(--green-deep); margin-bottom: 0.6rem; }
+  .step p { font-size: 0.95rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── Features ── */
+  .features-section {
+    background: var(--green-deep); padding: 6rem 2rem;
+    position: relative; overflow: hidden;
+  }
+
+  .features-section::before {
+    content: '';
+    position: absolute; inset: 0; opacity: 0.05;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .features-inner { max-width: 1100px; margin: 0 auto; position: relative; }
+  .features-inner .section-label { color: var(--teal); }
+  .features-inner .section-title { color: #fff; }
+  .features-inner .section-sub { color: rgba(255,255,255,0.6); }
+
+  .features-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem; margin-top: 4rem;
+  }
+
+  .feature-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px; padding: 2rem;
+    transition: background 0.2s;
+  }
+  .feature-card:hover { background: rgba(255,255,255,0.1); }
+
+  .feature-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(82,183,136,0.2); border: 1px solid rgba(82,183,136,0.3);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.25rem; font-size: 1.3rem;
+  }
+
+  .feature-card h3 { font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 0.5rem; }
+  .feature-card p { font-size: 0.9rem; color: rgba(255,255,255,0.55); line-height: 1.6; }
+
+  /* ── Testimonials ── */
+  .testimonials { background: var(--green-pale); padding: 6rem 2rem; }
+  .testimonials-inner { max-width: 1100px; margin: 0 auto; }
+
+  .testimonials-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin-top: 4rem;
+  }
+
+  .testimonial {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: 20px; padding: 2rem;
+  }
+
+  .testimonial-stars { color: var(--gold); font-size: 0.9rem; margin-bottom: 1rem; }
+  .testimonial p { font-size: 0.95rem; color: var(--muted); line-height: 1.7; font-style: italic; margin-bottom: 1.25rem; }
+  .testimonial-author { font-size: 0.85rem; font-weight: 600; color: var(--green-deep); }
+  .testimonial-role { font-size: 0.8rem; color: var(--muted); }
+
+  /* ── Pricing ── */
+  .pricing-section { padding: 6rem 2rem; }
+  .pricing-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+  .pricing-inner .section-sub { margin: 0 auto 4rem; }
+
+  .pricing-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+    margin-top: 3rem; text-align: left;
+  }
+
+  .pricing-card {
+    border: 1px solid var(--border); border-radius: 24px; padding: 2.5rem;
+    background: #fff; position: relative; transition: transform 0.2s;
+  }
+  .pricing-card:hover { transform: translateY(-4px); }
+  .pricing-card.featured {
+    border-color: var(--green-mid); border-width: 2px;
+    background: var(--green-pale);
+  }
+
+  .pricing-badge {
+    position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+    background: var(--green-mid); color: #fff;
+    font-size: 0.75rem; font-weight: 600; padding: 0.3rem 1rem; border-radius: 100px;
+    white-space: nowrap;
+  }
+
+  .pricing-name { font-size: 0.85rem; font-weight: 500; color: var(--muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.08em; }
+  .pricing-price { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 700; color: var(--green-deep); line-height: 1; }
+  .pricing-price span { font-size: 1rem; font-weight: 400; color: var(--muted); font-family: 'DM Sans', sans-serif; }
+  .pricing-desc { font-size: 0.9rem; color: var(--muted); margin: 0.75rem 0 1.5rem; }
+
+  .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
+  .pricing-features li { font-size: 0.9rem; color: var(--ink); display: flex; align-items: center; gap: 0.6rem; }
+  .pricing-features li::before { content: '✓'; color: var(--green-light); font-weight: 700; }
+
+  .pricing-btn {
+    display: block; text-align: center; padding: 0.85rem;
+    border-radius: 100px; font-weight: 500; font-size: 0.95rem;
+    text-decoration: none; transition: all 0.2s;
+  }
+  .pricing-btn.outline {
+    border: 1.5px solid var(--green-mid); color: var(--green-mid);
+  }
+  .pricing-btn.outline:hover { background: var(--green-pale); }
+  .pricing-btn.solid {
+    background: var(--green-mid); color: #fff;
+  }
+  .pricing-btn.solid:hover { background: var(--green-deep); }
+
+  /* ── CTA Banner ── */
+  .cta-section {
+    background: var(--green-deep); padding: 5rem 2rem; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .cta-section::after {
+    content: '';
+    position: absolute; width: 600px; height: 600px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(82,183,136,0.15), transparent 70%);
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+  }
+  .cta-inner { position: relative; z-index: 1; }
+  .cta-section h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem); color: #fff; margin-bottom: 1rem;
+  }
+  .cta-section p { color: rgba(255,255,255,0.65); font-size: 1.1rem; margin-bottom: 2.5rem; }
+
+  /* ── Footer ── */
+  footer {
+    background: var(--ink); color: rgba(255,255,255,0.5);
+    padding: 3rem 2rem; text-align: center;
+    font-size: 0.85rem;
+  }
+  footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
+  footer a:hover { color: #fff; }
+  .footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+  .footer-links { display: flex; gap: 1.5rem; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .hero-left > * { animation: fadeUp 0.6s ease both; }
+  .hero-eyebrow { animation-delay: 0.1s; }
+  .hero-title { animation-delay: 0.2s; }
+  .hero-sub { animation-delay: 0.3s; }
+  .hero-actions { animation-delay: 0.4s; }
+  .hero-trust { animation-delay: 0.5s; }
+  .hero-visual { animation: fadeUp 0.8s 0.3s ease both; }
+  .phone-frame { animation: float 5s ease-in-out infinite; }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .hero-inner { grid-template-columns: 1fr; }
+    .hero-visual { display: none; }
+    .steps { grid-template-columns: 1fr; }
+    .features-grid { grid-template-columns: 1fr; }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .footer-inner { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">P</div>
+    Pathfinder
+  </a>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#download" class="nav-cta">Download free</a>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">✦ AI-powered K–12 tutoring</div>
+      <h1 class="hero-title">The tutor that makes your child <em>think</em></h1>
+      <p class="hero-sub">Pathfinder guides students to answers through questions — never just handing them over. Real learning that actually sticks.</p>
+      <div class="hero-actions">
+        <a href="#download" class="btn-primary">
+          Download free
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="#how-it-works" class="btn-secondary">
+          See how it works
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-stat"><strong>100%</strong> Socratic method</div>
+        <div style="width:1px;height:32px;background:var(--border)"></div>
+        <div class="trust-stat"><strong>Free</strong> to start</div>
+        <div style="width:1px;height:32px;background:var(--border)"></div>
+        <div class="trust-stat"><strong>K–12</strong> all subjects</div>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-blob"></div>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-header">
+            <div class="phone-header-dot"></div>
+            <div class="phone-header-title">Math · Socratic Tutor</div>
+            <div class="phone-header-sub">End</div>
+          </div>
+          <div class="phone-chat">
+            <div class="chat-bubble tutor">What are you working on today?</div>
+            <div class="chat-bubble student">Solve 3x + 7 = 22</div>
+            <div class="chat-bubble tutor">Great! What's the first step to isolate the variable x on one side?</div>
+            <div class="chat-bubble student">Subtract 7 from both sides?</div>
+            <div class="chat-bubble tutor">Exactly right! So what does the equation look like now?</div>
+            <div class="chat-bubble student">3x = 15</div>
+            <div class="chat-bubble tutor">You're so close! What's the last step to find x?</div>
+            <div class="chat-bubble hint">💡 Think about what operation undoes multiplication.</div>
+          </div>
+          <div class="phone-input">
+            <div class="phone-input-box">Divide both sides by 3...</div>
+            <div class="phone-send">
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how-it-works" style="padding: 6rem 2rem; background: #fff;">
+  <div class="section" style="padding: 0;">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Guide, don't give</h2>
+    <p class="section-sub">Unlike AI tools that just hand over answers, Pathfinder uses the Socratic method — asking questions that lead your child to discover answers themselves.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Student asks a question</h3>
+        <p>Your child types their homework question, a problem they're stuck on, or a concept they don't understand.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Pathfinder guides with questions</h3>
+        <p>Instead of giving the answer, the AI tutor asks guiding questions that help the student work through the problem step by step.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Student discovers the answer</h3>
+        <p>The student reaches the answer themselves — building real understanding, not just copying. You see their progress in the parent dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="features-section">
+  <div class="features-inner">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Everything your child needs to truly learn</h2>
+    <p class="section-sub">Built for K–12 students across all core subjects, with tools for parents to stay informed.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Socratic AI tutor</h3>
+        <p>Never gives direct answers. Guides with questions that build real understanding and critical thinking skills.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💡</div>
+        <h3>Smart hints</h3>
+        <p>When students are really stuck, hints provide just enough nudge to move forward without giving away the answer.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <h3>Parent dashboard</h3>
+        <p>Weekly progress reports, subject mastery scores, and session history so parents stay informed without hovering.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📚</div>
+        <h3>All core subjects</h3>
+        <p>Math, Science, History, and English — covering K–12 curriculum across all the subjects your child needs help with.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <h3>Mastery scoring</h3>
+        <p>AI analyzes each session and generates a mastery score so students and parents can track real improvement over time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👨‍👩‍👧</div>
+        <h3>Multiple student profiles</h3>
+        <p>One parent account can manage multiple children, each with their own learning history and progress tracking.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Testimonials -->
+<section class="testimonials">
+  <div class="testimonials-inner">
+    <div class="section-label">What parents say</div>
+    <h2 class="section-title">Real results for real families</h2>
+    <div class="testimonials-grid">
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"My daughter used to just Google the answer. Now she actually works through problems and understands why. Pathfinder changed how she approaches learning."</p>
+        <div class="testimonial-author">Sarah M.</div>
+        <div class="testimonial-role">Parent of a 7th grader</div>
+      </div>
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"The parent dashboard is a game changer. I can see exactly where my son is struggling without interrogating him every night after school."</p>
+        <div class="testimonial-author">James T.</div>
+        <div class="testimonial-role">Parent of two middle schoolers</div>
+      </div>
+      <div class="testimonial">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"We tried other tutoring apps and they all just gave answers. Pathfinder is the only one that actually teaches. Worth every penny."</p>
+        <div class="testimonial-author">Linda K.</div>
+        <div class="testimonial-role">Parent of a 9th grader</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pricing -->
+<section id="pricing" class="pricing-section">
+  <div class="pricing-inner">
+    <div class="section-label" style="text-align:center">Pricing</div>
+    <h2 class="section-title">Start free, upgrade when ready</h2>
+    <p class="section-sub">No credit card required to get started. Upgrade anytime for unlimited access.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-name">Free</div>
+        <div class="pricing-price">$0 <span>/ month</span></div>
+        <div class="pricing-desc">Everything you need to get started</div>
+        <ul class="pricing-features">
+          <li>1 subject (Math)</li>
+          <li>3 hints per day</li>
+          <li>Session history (last 5)</li>
+          <li>1 student profile</li>
+        </ul>
+        <a href="#download" class="pricing-btn outline">Download free</a>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge">Most popular</div>
+        <div class="pricing-name">Premium</div>
+        <div class="pricing-price">$12.99 <span>/ month</span></div>
+        <div class="pricing-desc">Or $99/year — save 36%</div>
+        <ul class="pricing-features">
+          <li>All subjects — Math, Science, History, English</li>
+          <li>Unlimited hints</li>
+          <li>Full session history</li>
+          <li>Unlimited student profiles</li>
+          <li>Parent dashboard & reports</li>
+          <li>Detailed mastery scores</li>
+        </ul>
+        <a href="#download" class="pricing-btn solid">Start Premium</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="download" class="cta-section">
+  <div class="cta-inner">
+    <h2>Ready to find the path to real learning?</h2>
+    <p>Download free on iOS and Android. No credit card required.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+      <a href="#" class="btn-primary" style="background:#fff;color:var(--green-deep);">
+        ⬇ App Store
+      </a>
+      <a href="#" class="btn-primary" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);">
+        ⬇ Google Play
+      </a>
+    </div>
+    <p style="margin-top:1.5rem;font-size:0.85rem;color:rgba(255,255,255,0.4);">
+      Contact: hello@pathfinderapp.com
+    </p>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div>© 2026 Pathfinder. All rights reserved.</div>
+    <div class="footer-links">
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="mailto:hello@pathfinderapp.com">Contact</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
